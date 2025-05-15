@@ -26,6 +26,7 @@ if config.config_file_name is not None:
 
 # === Metadata de los modelos para autogenerate ===
 target_metadata = SQLModel.metadata
+print(f"Tables detected in metadata: {list(target_metadata.tables.keys())}")
 
 
 def run_migrations_offline() -> None:
@@ -41,7 +42,6 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
-print(f"Tables detected in metadata: {list(target_metadata.tables.keys())}")
 def run_migrations_online() -> None:
     """Ejecuta migraciones en modo online (con conexión)."""
     with engine.connect() as connection:
