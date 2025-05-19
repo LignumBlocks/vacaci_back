@@ -11,11 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 # === Importar el engine y modelos ===
 from sqlmodel import SQLModel
 from app.db.session import engine
-from app.models.user import User
-from app.models.itinerary import Itinerary
-from app.models.token_usage_log import TokenUsageLog
-from app.models.affiliate_click import AffiliateClick
-from app.models.subscription_event import SubscriptionEvent
+import app.models
 
 # === Alembic Config ===
 config = context.config

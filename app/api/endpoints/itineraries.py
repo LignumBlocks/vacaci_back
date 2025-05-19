@@ -4,16 +4,11 @@ from app.db.session import get_session
 from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.models.itinerary import Itinerary
+from app.models.token_usage_log import TokenUsageLog
 from app.schemas.itinerary import ItineraryRequest, ItineraryResponse
 from datetime import datetime
-from openai import OpenAI
-import os
+from app.core.gpt_guidance import generate_itinerary_json
 import json
-from dotenv import load_dotenv
-
-load_dotenv()
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 router = APIRouter()
 
@@ -23,29 +18,10 @@ def create_itinerary(
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user)
 ):
-    prompt = (
-        f"Eres Vacaci, un experto planificador de viajes para mexicanos. "
-        f"Planifica un itinerario desde {data.origin} a {data.destination}, "
-        f"del {data.start_date.date()} al {data.end_date.date()}, para {data.travelers} personas. "
-        f"Presupuesto: {data.budget or 'sin restricción'}. "
-        f"Intereses: {data.interests or 'generales'}. "
-        f"Idioma: {data.language}, moneda: {data.currency}. "
-        f"Devuelve el itinerario en JSON con campos: diaN, actividades[], restaurante, consejo."
-    )
-
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "Actúa como un planificador de viajes experto para mexicanos."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7
-        )
+        content = generate_itinerary_json(data)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al generar con OpenAI: {str(e)}")
-
-    content = response.choices[0].message.content
+        raise HTTPException(status_code=500, detail=f"Error al generar con Guidance: {str(e)}")
 
     itinerary = Itinerary(
         user_id=user.id,
@@ -66,5 +42,16 @@ def create_itinerary(
     session.add(itinerary)
     session.commit()
     session.refresh(itinerary)
+
+    # Registrar token usage (temporal = 0 porque Guidance aún no reporta tokens)
+    log = TokenUsageLog(
+        user_id=user.id,
+        itinerary_id=itinerary.id,
+        tokens_used=0,
+        model="gpt-4o-mini (Guidance)",
+        created_at=datetime.utcnow()
+    )
+    session.add(log)
+    session.commit()
 
     return itinerary

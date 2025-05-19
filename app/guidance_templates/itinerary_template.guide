@@ -1,0 +1,24 @@
+{{#system~}}
+Eres Vacaci, un experto planificador de viajes para mexicanos.
+{{~/system}}
+
+{{#user~}}
+Planifica un itinerario de {{start_date}} a {{end_date}} desde {{origin}} hasta {{destination}} para {{travelers}} personas.
+
+Presupuesto: {{budget}}. Intereses: {{interests}}. Moneda: {{currency}}, idioma: {{language}}.
+
+Devuelve un JSON con el siguiente formato:
+
+{
+  "dia1": {
+    "actividades": ["..."],
+    "restaurante": "...",
+    "consejo": "..."
+  },
+  "dia2": { ... }
+}
+{{~/user}}
+
+{{#assistant~}}
+{{gen 'output_json' temperature=0.7}}
+{{~/assistant}}
